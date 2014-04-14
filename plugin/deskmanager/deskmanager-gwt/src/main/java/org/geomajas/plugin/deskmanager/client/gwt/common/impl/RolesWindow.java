@@ -10,30 +10,20 @@
  */
 package org.geomajas.plugin.deskmanager.client.gwt.common.impl;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.geomajas.gwt.client.command.CommandCallback;
-import org.geomajas.gwt.client.command.GwtCommand;
-import org.geomajas.gwt.client.command.GwtCommandDispatcher;
-import org.geomajas.plugin.deskmanager.client.gwt.common.GdmLayout;
-import org.geomajas.plugin.deskmanager.client.gwt.common.ProfileRequestCallback;
-import org.geomajas.plugin.deskmanager.client.gwt.common.ProfileRequestHandler;
-import org.geomajas.plugin.deskmanager.client.gwt.common.i18n.CommonMessages;
-import org.geomajas.plugin.deskmanager.command.security.dto.RetrieveRolesRequest;
-import org.geomajas.plugin.deskmanager.command.security.dto.RetrieveRolesResponse;
-import org.geomajas.plugin.deskmanager.domain.security.dto.ProfileDto;
-import org.geomajas.plugin.deskmanager.domain.security.dto.Role;
-
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.i18n.client.LocaleInfo;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Button;
-import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.layout.VLayout;
+import org.geomajas.plugin.deskmanager.client.gwt.common.ProfileRequestCallback;
+import org.geomajas.plugin.deskmanager.client.gwt.common.i18n.CommonMessages;
+import org.geomajas.plugin.deskmanager.domain.security.dto.ProfileDto;
+import org.geomajas.plugin.deskmanager.domain.security.dto.Role;
+
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Default role implementation that asks for a role from a list of roles retrieved from the server.
@@ -41,7 +31,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
  * @author Oliver May
  * 
  */
-public class RolesWindow implements ProfileRequestHandler {
+public class RolesWindow {
 
 	private static final CommonMessages MESSAGES = GWT.create(CommonMessages.class);
 
@@ -49,7 +39,7 @@ public class RolesWindow implements ProfileRequestHandler {
 
 	/**
 	 * Constructor for the roleswindow.
-	 * 
+	 *
 	 * @param onlyAdminRoles
 	 *            is true the window will only ask for admin roles. This is introduced for the 'beheersmodule'. TODO:
 	 *            make sure the getAvailableRolesCommand only returns the correct roles so that this constructor can be
@@ -59,61 +49,14 @@ public class RolesWindow implements ProfileRequestHandler {
 		this.onlyAdminRoles = onlyAdminRoles;
 	}
 
-	@Override
-	public void requestProfile(String securityToken, String geodeskId, final ProfileRequestCallback callback) {
-		RetrieveRolesRequest request = new RetrieveRolesRequest();
-		request.setGeodeskId(geodeskId);
-		request.setLocale(LocaleInfo.getCurrentLocale().getLocaleName());
-		request.setSecurityToken(securityToken);
 
-		GwtCommand command = new GwtCommand(RetrieveRolesRequest.COMMAND);
-		command.setCommandRequest(request);
-		GwtCommandDispatcher.getInstance().execute(command, new CommandCallback<RetrieveRolesResponse>() {
-
-			public void execute(RetrieveRolesResponse response) {
-				// If only one role, use default
-				Entry<String, ProfileDto> guest = null;
-				for (Entry<String, ProfileDto> role : response.getRoles().entrySet()) {
-					if (role.getValue().getRole().equals(Role.GUEST)) {
-						guest = role;
-					}
-				}
-
-				if (guest != null) {
-					callback.onTokenChanged(guest.getKey(), guest.getValue());
-				} else if (response.getRoles().size() == 1) {
-					for (Entry<String, ProfileDto> role : response.getRoles().entrySet()) {
-						callback.onTokenChanged(role.getKey(), role.getValue());
-					}
-				} else if (response.getRoles().size() > 0) {
-					askRoleWindow(response.getRoles(), callback);
-				} else {
-					showUnauthorizedWindow();
-				}
-			}
-		});
-	}
-
-	private void showUnauthorizedWindow() {
-		final Window winModal = new Window();
-		winModal.setWidth(500);
-		winModal.setHeight(300);
-		winModal.setTitle(MESSAGES.rolesWindowUnauthorizedWindowTitle());
-		winModal.setShowMinimizeButton(false);
-		winModal.setIsModal(true);
-		winModal.setShowModalMask(true);
-		winModal.centerInPage();
-		winModal.setShowCloseButton(false);
-		winModal.setZIndex(GdmLayout.roleSelectZindex);
-
-		HTMLPane pane = new HTMLPane();
-		pane.setContents("<br/><br/><center>" + MESSAGES.rolesWindowInsufficientRightsForDesk() + "</center>");
-		winModal.addItem(pane);
-		winModal.show();
-	}
-
-	
-	private void askRoleWindow(Map<String, ProfileDto> roles, final ProfileRequestCallback callback) {
+	/**
+	 * Ask the user to select a role.
+	 *
+	 * @param roles a list of roles.
+	 * @param callback the callback, called when a role is selected.
+	 */
+	public void askRoleWindow(Map<String, ProfileDto> roles, final ProfileRequestCallback callback) {
 		final Window winModal = new Window();
 		winModal.setWidth(500);
 		winModal.setHeight(300);
