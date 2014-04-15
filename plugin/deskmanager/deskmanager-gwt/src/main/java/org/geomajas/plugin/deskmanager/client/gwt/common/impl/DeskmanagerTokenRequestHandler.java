@@ -43,9 +43,6 @@ public class DeskmanagerTokenRequestHandler implements org.geomajas.gwt.client.c
 
 	protected ProfileDto profile;
 
-	private String securityToken;
-
-
 	/**
 	 * Create a deskmanaer token request handler. This will show a list of profiles valid for the selected
 	 * geodesk/manager application. If needed it will call a fallbackTokenRequestHandler handler to request a valid security token.
@@ -68,7 +65,7 @@ public class DeskmanagerTokenRequestHandler implements org.geomajas.gwt.client.c
 		RetrieveRolesRequest request = new RetrieveRolesRequest();
 		request.setGeodeskId(geodeskId);
 		request.setLocale(LocaleInfo.getCurrentLocale().getLocaleName());
-		request.setSecurityToken(securityToken);
+		request.setSecurityToken(token);
 
 		GwtCommand command = new GwtCommand(RetrieveRolesRequest.COMMAND);
 		command.setCommandRequest(request);
@@ -76,10 +73,9 @@ public class DeskmanagerTokenRequestHandler implements org.geomajas.gwt.client.c
 
 			public void execute(RetrieveRolesResponse response) {
 				//Guest role, proceed
-				Map.Entry<String, ProfileDto> guest = null;
 				for (Map.Entry<String, ProfileDto> role : response.getRoles().entrySet()) {
 					if (role.getValue().getRole().equals(Role.GUEST)) {
-						guest = role;
+						token = role.getKey();
 						tokenChangedHandler.onTokenChanged(new TokenChangedEvent(token));
 						return;
 					}
@@ -101,6 +97,10 @@ public class DeskmanagerTokenRequestHandler implements org.geomajas.gwt.client.c
 							tokenChangedHandler.onTokenChanged(new TokenChangedEvent(token));
 						}
 					});
+				// if geodesk is public, don't use any role
+				} else if (response.isPublicGeodesk()) {
+						tokenChangedHandler.onTokenChanged(new TokenChangedEvent(token));
+						return;
 				// If no roles, try fallback.
 				} else if (fallbackTokenRequestHandler != null) {
 					fallbackTokenRequestHandler.login(new TokenChangedHandler() {

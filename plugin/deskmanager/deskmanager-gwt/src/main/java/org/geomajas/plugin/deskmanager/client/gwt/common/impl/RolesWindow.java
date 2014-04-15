@@ -119,7 +119,7 @@ public class RolesWindow {
 	private String getRoleDescription(Role role) {
 		switch (role)  {
 			case UNASSIGNED:
-				return MESSAGES.roleUnsignedDescription();
+				return MESSAGES.roleUnassignedDescription();
 			case GUEST:
 				return MESSAGES.roleGuestDescription();
 			case ADMINISTRATOR:
